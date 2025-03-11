@@ -59,7 +59,7 @@ numeric_cols = [
     'Drainage (km2)', 'Inspection Frequency', 'Distance to Nearest City (km)',
     'Probability of Failure', 'Loss given failure - prop (Qm)',
     'Loss given failure - liab (Qm)', 'Loss given failure - BI (Qm)',
-    'Last Inspection Date', 'Assessment Date', 'Years Modified'  # Numeric years
+    'Last Inspection Date', 'Assessment Date', 'Years Modified'
 ]
 
 print("Encoding categoricals...")
@@ -67,7 +67,7 @@ label_encoders = {}
 df_encoded = df.copy()
 for col in categorical_cols:
     le = LabelEncoder()
-    df_encoded[col] = df_encoded[col].fillna('Missing')  # Treat NaN as a category for encoding
+    df_encoded[col] = df_encoded[col].fillna('Missing')
     df_encoded[col] = le.fit_transform(df_encoded[col])
     label_encoders[col] = le
 print("Categoricals encoded")
@@ -82,9 +82,9 @@ scaler = StandardScaler()
 data_scaled = scaler.fit_transform(data_to_impute)
 print("Data scaled")
 
-# --- Apply KNN Imputation with Fixed K=5 ---
-print("Applying KNN imputation with K=5...")
-imputer = KNNImputer(n_neighbors=5, weights='uniform')
+# --- Apply KNN Imputation with K=10 ---
+print("Applying KNN imputation with K=10...")
+imputer = KNNImputer(n_neighbors=10, weights='uniform')
 imputed_scaled = imputer.fit_transform(data_scaled)
 
 # Transform back to original scale
@@ -99,6 +99,11 @@ for col in categorical_cols:
     data_imputed[col] = label_encoders[col].inverse_transform(imputed_int)
 print("Categoricals decoded")
 
+# --- Round Year Completed and Years Modified to Nearest Integer ---
+print("Rounding 'Year Completed' and 'Years Modified' to nearest year...")
+data_imputed['Year Completed'] = data_imputed['Year Completed'].round().astype(int)
+data_imputed['Years Modified'] = data_imputed['Years Modified'].round().astype(int)
+
 # --- Preserve Original Non-Missing Values ---
 df_final = df.copy()
 for col in cols_to_impute:
@@ -109,13 +114,13 @@ print("Dropping 'Last Inspection Date' column...")
 df_final = df_final.drop(columns=['Last Inspection Date'])
 
 # Display the imputed DataFrame
-print("\nDataFrame after KNN imputation and dropping 'Last Inspection Date':")
+print("\nDataFrame after KNN imputation, rounding years, and dropping 'Last Inspection Date':")
 print(df_final.head())
 
 # Save the imputed DataFrame
 output_file = "dam_data_imputed_fixed.csv"
 try:
     df_final.to_csv(output_file, index=False)
-    print(f"Imputed data saved to '{output_file}' with K=5, Weights='uniform'.")
+    print(f"Imputed data saved to '{output_file}' with K=10, Weights='uniform'.")
 except Exception as e:
     print(f"Error saving file: {e}")
