@@ -8,7 +8,7 @@ import os
 sns.set_style("whitegrid")
 
 # Load dataset with error handling
-file_path = "dam_data.csv"  # Adjust path as needed
+file_path = "dam_data_navaldia.csv"  # Adjust path as needed
 if not os.path.exists(file_path):
     print(f"Error: File '{file_path}' not found in {os.getcwd()}")
     exit(1)
@@ -68,7 +68,7 @@ plt.legend(loc="upper left", bbox_to_anchor=(1, 1))  # Move legend outside plot
 plt.tight_layout()
 
 # Save the plot
-plt.savefig(os.path.join(output_dir, "complex_boxplot.png"), bbox_inches="tight")
+plt.savefig(os.path.join(output_dir, "navaldia_boxplot.png"), bbox_inches="tight")
 plt.close()
 
 # Print diagnostics
