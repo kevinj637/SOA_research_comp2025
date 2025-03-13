@@ -82,9 +82,9 @@ scaler = StandardScaler()
 data_scaled = scaler.fit_transform(data_to_impute)
 print("Data scaled")
 
-# --- Apply KNN Imputation with K=10 ---
-print("Applying KNN imputation with K=10...")
-imputer = KNNImputer(n_neighbors=10, weights='uniform')
+# --- Apply KNN Imputation with K=5 ---
+print("Applying KNN imputation with K=5...")
+imputer = KNNImputer(n_neighbors=5, weights='uniform')
 imputed_scaled = imputer.fit_transform(data_scaled)
 
 # Transform back to original scale
@@ -113,14 +113,25 @@ for col in cols_to_impute:
 print("Dropping 'Last Inspection Date' column...")
 df_final = df_final.drop(columns=['Last Inspection Date'])
 
+# --- Create New Columns ---
+print("Creating 'Total Loss Given Failure' and 'Expected Loss Value'...")
+df_final['Total Loss Given Failure'] = (
+    df_final['Loss given failure - prop (Qm)'] +
+    df_final['Loss given failure - liab (Qm)'] +
+    df_final['Loss given failure - BI (Qm)']
+)
+df_final['Expected Loss Value'] = (
+    df_final['Probability of Failure'] * df_final['Total Loss Given Failure']
+)
+
 # Display the imputed DataFrame
-print("\nDataFrame after KNN imputation, rounding years, and dropping 'Last Inspection Date':")
+print("\nDataFrame after KNN imputation, rounding years, and adding new columns:")
 print(df_final.head())
 
 # Save the imputed DataFrame
-output_file = "dam_data_imputed_fixed.csv"
+output_file = "dam_data_imputed_new_columns.csv"
 try:
     df_final.to_csv(output_file, index=False)
-    print(f"Imputed data saved to '{output_file}' with K=10, Weights='uniform'.")
+    print(f"Imputed data saved to '{output_file}' with K=5, Weights='uniform'.")
 except Exception as e:
     print(f"Error saving file: {e}")
