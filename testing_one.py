@@ -34,7 +34,7 @@ print(df.info())
 def extract_year(value):
     if pd.isna(value):
         return np.nan
-    value = str(value)
+    value = str(value).strip()
     try:
         if '/' in value:
             return int(value.split('/')[-1])  # Extract year from "DD/MM/YYYY"
@@ -99,10 +99,11 @@ for col in categorical_cols:
     data_imputed[col] = label_encoders[col].inverse_transform(imputed_int)
 print("Categoricals decoded")
 
-# --- Round Year Completed and Years Modified to Nearest Integer ---
-print("Rounding 'Year Completed' and 'Years Modified' to nearest year...")
+# --- Round Specific Numeric Columns ---
+print("Rounding specific numeric columns...")
 data_imputed['Year Completed'] = data_imputed['Year Completed'].round().astype(int)
 data_imputed['Years Modified'] = data_imputed['Years Modified'].round().astype(int)
+data_imputed['Inspection Frequency'] = data_imputed['Inspection Frequency'].round().astype(int)  # Added rounding
 
 # --- Preserve Original Non-Missing Values ---
 df_final = df.copy()
@@ -124,9 +125,14 @@ df_final['Expected Loss Value'] = (
     df_final['Probability of Failure'] * df_final['Total Loss Given Failure']
 )
 
+# --- Ensure Inspection Frequency is Positive ---
+df_final['Inspection Frequency'] = df_final['Inspection Frequency'].clip(lower=0)
+
 # Display the imputed DataFrame
-print("\nDataFrame after KNN imputation, rounding years, and adding new columns:")
+print("\nDataFrame after KNN imputation, rounding, and adding new columns:")
 print(df_final.head())
+print("\nFinal DataFrame Info:")
+print(df_final.info())
 
 # Save the imputed DataFrame
 output_file = "dam_data_imputed_new_columns.csv"
