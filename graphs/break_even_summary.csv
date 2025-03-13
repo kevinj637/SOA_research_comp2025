@@ -1,0 +1,4 @@
+Entity,Claim Size Range (£M),Max Sustainable Cost (£M),Responsibility
+Direct Insurers,0 - 2.4,1.0,Low to Medium Claims
+Reinsurers,2.4 - 53.5,20.0,High Claims
+Government,>53.5,N/A,Extreme Claims
