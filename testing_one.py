@@ -34,7 +34,7 @@ print(df.info())
 def extract_year(value):
     if pd.isna(value):
         return np.nan
-    value = str(value)
+    value = str(value).strip()
     try:
         if '/' in value:
             return int(value.split('/')[-1])  # Extract year from "DD/MM/YYYY"
@@ -82,9 +82,9 @@ scaler = StandardScaler()
 data_scaled = scaler.fit_transform(data_to_impute)
 print("Data scaled")
 
-# --- Apply KNN Imputation with K=10 ---
-print("Applying KNN imputation with K=10...")
-imputer = KNNImputer(n_neighbors=10, weights='uniform')
+# --- Apply KNN Imputation with K=5 ---
+print("Applying KNN imputation with K=5...")
+imputer = KNNImputer(n_neighbors=5, weights='uniform')
 imputed_scaled = imputer.fit_transform(data_scaled)
 
 # Transform back to original scale
@@ -99,10 +99,11 @@ for col in categorical_cols:
     data_imputed[col] = label_encoders[col].inverse_transform(imputed_int)
 print("Categoricals decoded")
 
-# --- Round Year Completed and Years Modified to Nearest Integer ---
-print("Rounding 'Year Completed' and 'Years Modified' to nearest year...")
+# --- Round Specific Numeric Columns ---
+print("Rounding specific numeric columns...")
 data_imputed['Year Completed'] = data_imputed['Year Completed'].round().astype(int)
 data_imputed['Years Modified'] = data_imputed['Years Modified'].round().astype(int)
+data_imputed['Inspection Frequency'] = data_imputed['Inspection Frequency'].round().astype(int)  # Added rounding
 
 # --- Preserve Original Non-Missing Values ---
 df_final = df.copy()
@@ -113,14 +114,30 @@ for col in cols_to_impute:
 print("Dropping 'Last Inspection Date' column...")
 df_final = df_final.drop(columns=['Last Inspection Date'])
 
+# --- Create New Columns ---
+print("Creating 'Total Loss Given Failure' and 'Expected Loss Value'...")
+df_final['Total Loss Given Failure'] = (
+    df_final['Loss given failure - prop (Qm)'] +
+    df_final['Loss given failure - liab (Qm)'] +
+    df_final['Loss given failure - BI (Qm)']
+)
+df_final['Expected Loss Value'] = (
+    df_final['Probability of Failure'] * df_final['Total Loss Given Failure']
+)
+
+# --- Ensure Inspection Frequency is Positive ---
+df_final['Inspection Frequency'] = df_final['Inspection Frequency'].clip(lower=0)
+
 # Display the imputed DataFrame
-print("\nDataFrame after KNN imputation, rounding years, and dropping 'Last Inspection Date':")
+print("\nDataFrame after KNN imputation, rounding, and adding new columns:")
 print(df_final.head())
+print("\nFinal DataFrame Info:")
+print(df_final.info())
 
 # Save the imputed DataFrame
-output_file = "dam_data_imputed_fixed.csv"
+output_file = "dam_data_imputed_new_columns.csv"
 try:
     df_final.to_csv(output_file, index=False)
-    print(f"Imputed data saved to '{output_file}' with K=10, Weights='uniform'.")
+    print(f"Imputed data saved to '{output_file}' with K=5, Weights='uniform'.")
 except Exception as e:
     print(f"Error saving file: {e}")
