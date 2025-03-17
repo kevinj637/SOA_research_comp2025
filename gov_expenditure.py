@@ -51,7 +51,7 @@ def total_loss_percentile(file : str, lower_percentile : int, upper_percentile :
     df.sort_values("Expected Loss Value", axis= 0, ascending=True, inplace=True)
     lower_bound = int(df.index.size * lower_percentile / 100)
     upper_bound = int(df.index.size * upper_percentile / 100)
-    df_analyze = df.loc[lower_bound:upper_bound]
+    df_analyze = df.iloc[lower_bound:upper_bound]
     expected_value = df_analyze.get(["Expected Loss Value"]).sum()
     total_loss_avg = df_analyze.get(["Total Loss Given Failure"]).sum()
     df_analyze.to_csv(f"outlier_{file}")
