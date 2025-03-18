@@ -46,7 +46,7 @@ def gov_average_loss_90(file :str) -> (tuple):
     return total_loss_avg.values[0], expected_value.values[0], standard_deviation, cumulative_variance, df_analyze.index.size
 
 
-def total_loss_percentile(file : str, lower_percentile : int, upper_percentile : int) -> (tuple):
+def total_loss_percentile(file : str, lower_percentile : int, upper_percentile : int, verbose : bool) -> (tuple):
     df = pd.read_csv(f"{file}")
     df.sort_values("Expected Loss Value", axis= 0, ascending=True, inplace=True)
     lower_bound = int(df.index.size * lower_percentile / 100)
@@ -56,17 +56,18 @@ def total_loss_percentile(file : str, lower_percentile : int, upper_percentile :
     total_loss_avg = df_analyze.get(["Total Loss Given Failure"]).sum()
     df_analyze.to_csv(f"outlier_{file}")
     cumulative_variance = 0
-    print(df_analyze.columns.get_loc("Total Loss Given Failure"))
+    if verbose:
+        print(df_analyze.columns.get_loc("Total Loss Given Failure"))
     for i in range(df_analyze.index.size):
         second_moment = df_analyze.iloc[i, 18] * df_analyze.iloc[i, 22] * df_analyze.iloc[i, 22]
         variance = second_moment - df_analyze.iloc[i, 23] * df_analyze.iloc[i, 23]
         cumulative_variance = variance + cumulative_variance
     standard_deviation = math.sqrt(cumulative_variance)
-
-    print(f"""Region: {df.iloc[3,1]}\nAverage Loss Given Failure: {total_loss_avg.values[0]}\nExpected Value: {expected_value.values[0]}\nStandard Deviation: {standard_deviation}\nVariance: {cumulative_variance}\nNumber of Dams: {df_analyze.index.size}\nExpected Reserves: {z_value(standard_deviation, expected_value)}\n\n""")
+    if verbose:
+        print(f"""Region: {df.iloc[3,1]}\nAverage Loss Given Failure: {total_loss_avg.values[0]}\nExpected Value: {expected_value.values[0]}\nStandard Deviation: {standard_deviation}\nVariance: {cumulative_variance}\nNumber of Dams: {df_analyze.index.size}\nExpected Reserves: {z_value(standard_deviation, expected_value)}\n\n""")
     return total_loss_avg.values[0], expected_value.values[0], standard_deviation, cumulative_variance, df_analyze.index.size
 
-def average_loss_percentile(file : str, lower_percentile : int, upper_percentile : int) -> (tuple):
+def average_loss_percentile(file : str, lower_percentile : int, upper_percentile : int, verbose : False) -> (tuple):
     df = pd.read_csv(f"{file}")
     df.sort_values("Expected Loss Value", axis= 0, ascending=True, inplace=True)
     lower_bound = int(df.index.size * lower_percentile / 100)
@@ -77,7 +78,8 @@ def average_loss_percentile(file : str, lower_percentile : int, upper_percentile
     total_loss_avg = df_analyze.get(["Total Loss Given Failure"]).sum() / df_analyze.index.size
     df_analyze.to_csv(f"outlier_{file}")
     cumulative_variance = 0
-    print(df_analyze.columns.get_loc("Total Loss Given Failure"))
+    if verbose:
+        print(df_analyze.columns.get_loc("Total Loss Given Failure"))
     for i in range(df_analyze.index.size):
         second_moment = df_analyze.iloc[i, 18] * df_analyze.iloc[i, 22] * df_analyze.iloc[i, 22]
         variance = second_moment - df_analyze.iloc[i, 23] * df_analyze.iloc[i, 23]
@@ -85,6 +87,6 @@ def average_loss_percentile(file : str, lower_percentile : int, upper_percentile
     expected_value = expected_value / df_analyze.index.size
     cumulative_variance = cumulative_variance / df_analyze.index.size
     standard_deviation = math.sqrt(cumulative_variance)
-
-    print(f"""Region: {df.iloc[3,1]}\nAverage Loss Given Failure: {total_loss_avg.values[0]}\nExpected Value: {expected_value.values[0]}\nStandard Deviation: {standard_deviation}\nVariance: {cumulative_variance}\nNumber of Dams: {df_analyze.index.size}\nExpected Reserves: {z_value(standard_deviation, expected_value)}\n\n""")
+    if verbose:
+        print(f"""Region: {df.iloc[3,1]}\nAverage Loss Given Failure: {total_loss_avg.values[0]}\nExpected Value: {expected_value.values[0]}\nStandard Deviation: {standard_deviation}\nVariance: {cumulative_variance}\nNumber of Dams: {df_analyze.index.size}\nExpected Reserves: {z_value(standard_deviation, expected_value)}\n\n""")
     return total_loss_avg.values[0], expected_value.values[0], standard_deviation, cumulative_variance, df_analyze.index.size

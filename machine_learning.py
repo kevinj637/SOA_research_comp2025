@@ -5,7 +5,7 @@ import matplotlib.pyplot as plot
 import gov_expenditure
 import scipy.stats
 
-def expected_losses_given_min_frequency(file : str, frequency : int, initial_percentile: float, make_graph : bool) -> tuple:
+def expected_losses_given_min_frequency(file : str, frequency : int, initial_percentile: float, make_graph : bool, verbose : bool) -> tuple:
     #obtain probabilities
     df = pd.read_csv(file)
     train_df = df.copy(True)
@@ -37,9 +37,9 @@ def expected_losses_given_min_frequency(file : str, frequency : int, initial_per
         plot.legend()
         plot.savefig(f"frequency_adjusted_expected_loss__{df.loc[0, "Region"]}_histogram.png")
 
-    new_data = gov_expenditure.total_loss_percentile(f"machine_learning_frequency_adjusted_{df.loc[0, "Region"]}.csv", 0, 100)
-    old_data = gov_expenditure.total_loss_percentile(file, 0, 100)
-    gov_threshold = scipy.stats.norm.ppf(0.95) * old_data[2] + old_data[1] #one standard deviation, covers 95% to 99.7% of all cases
+    new_data = gov_expenditure.total_loss_percentile(f"machine_learning_frequency_adjusted_{df.loc[0, "Region"]}.csv", 0, 100, False)
+    old_data = gov_expenditure.total_loss_percentile(file, 0, 100, False)
+    gov_threshold = scipy.stats.norm.ppf(initial_percentile/100) * old_data[2] + old_data[1] #one standard deviation, covers 95% to 99.7% of all cases
     gov_reserve = scipy.stats.norm.ppf(0.997) * old_data[2] + old_data[1] - gov_threshold
     new__gov_detachment_point = scipy.stats.norm.ppf(0.997) * new_data[2] + new_data[1] #the amount of money for 99.7% of all cases
     new_gov_threshold = new__gov_detachment_point - gov_reserve
