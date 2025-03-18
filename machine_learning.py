@@ -15,8 +15,10 @@ def expected_losses_given_min_frequency(file : str, frequency : int, initial_per
     for i in range(test_df.index.size):
         if (test_df.loc[i, "Inspection Frequency"] < frequency):
             test_df.loc[i, "Inspection Frequency"] = frequency
-    model = ydf.GradientBoostedTreesLearner(label="Probability of Failure", task=ydf.Task.REGRESSION).train(train_df)
+    ydf.verbose(0)
+    model = ydf.GradientBoostedTreesLearner(label="Probability of Failure", task=ydf.Task.REGRESSION,).train(train_df)
     ydf_prediction = model.predict(test_df)
+    
     for i in range(test_df.index.size):
         test_df.loc[i, "Probability of Failure"] = ydf_prediction[i]
     
@@ -44,11 +46,19 @@ def expected_losses_given_min_frequency(file : str, frequency : int, initial_per
     new__gov_detachment_point = scipy.stats.norm.ppf(0.997) * new_data[2] + new_data[1] #the amount of money for 99.7% of all cases
     new_gov_threshold = new__gov_detachment_point - gov_reserve
     new_percentile = scipy.stats.norm.cdf(new_gov_threshold, new_data[1], new_data[2])
-    print("Based on the original data, the threshold should be:", gov_threshold, "and the reserve is", gov_reserve)
-    print(f"The expected value of the new data is {new_data[1]} with standard deviation {new_data[2]}.")
-    print(f"This means the government detachment point is {new__gov_detachment_point} and the detachment point is {new_gov_threshold}.")
-    print(f"The insurance companies will expect to pay {new_data[1]} instead of {old_data[1]}. This represents a decreased payout of {new_data[1] - old_data[1]}")
-    print(f"The government threshold will also shift by {new_gov_threshold - gov_threshold}")
-    print(f"This is the {new_percentile * 100} percentile.")
+    if verbose:
+        print("Based on the original data, the threshold should be:", gov_threshold, "and the reserve is", gov_reserve)
+        print(f"The expected value of the new data is {new_data[1]} with standard deviation {new_data[2]}.")
+        print(f"This means the government detachment point is {new__gov_detachment_point} and the detachment point is {new_gov_threshold}.")
+        print(f"The insurance companies will expect to pay {new_data[1]} instead of {old_data[1]}. This represents a decreased payout of {new_data[1] - old_data[1]}")
+        print(f"The government threshold will also shift by {new_gov_threshold - gov_threshold}")
+        print(f"This is the {new_percentile * 100} percentile.")
     
-    return new_percentile
+    ans = {f"Threshold percent {df.loc[0,"Region"]}" : new_percentile}
+    ans.update({f"Original Threshold {df.loc[0,"Region"]}": gov_threshold})
+    ans.update({f"New Threshold {df.loc[0,"Region"]}" : new_gov_threshold})
+    ans.update({f"Change in Threshold {df.loc[0,"Region"]}" : new_gov_threshold - gov_threshold})
+    ans.update({f"Original Expected Payout {df.loc[0,"Region"]}" : old_data[1]})
+    ans.update({f"New Expected Payout {df.loc[0,"Region"]}" : new_data[1]})
+    ans.update({f"Change in Payout {df.loc[0,"Region"]}" : new_data[1] - old_data[1]})
+    return ans
