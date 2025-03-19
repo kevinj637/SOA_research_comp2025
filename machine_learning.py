@@ -10,7 +10,7 @@ def expected_losses_given_min_frequency(file : str, frequency : int, initial_per
     df = pd.read_csv(file)
     train_df = df.copy(True)
     #train_df.columns
-    train_df = train_df.drop(columns=["ID", "Years Modified", "Assessment Date", "Assessment Date","Loss given failure - prop (Qm)","Loss given failure - liab (Qm)", "Loss given failure - BI (Qm)", "Total Loss Given Failure", "Expected Loss Value"])
+    train_df = train_df.drop(columns=["ID", "Years Modified", "Assessment Date", "Assessment Date","Loss given failure - prop (Qm)","Loss given failure - liab (Qm)", "Loss given failure - BI (Qm)", "Total Loss Given Failure", "Expected Loss Value", "Hazard"])
     test_df = train_df.copy(True)
     for i in range(test_df.index.size):
         if (test_df.loc[i, "Inspection Frequency"] < frequency):
@@ -30,17 +30,18 @@ def expected_losses_given_min_frequency(file : str, frequency : int, initial_per
     new_df.to_csv(f"machine_learning_frequency_adjusted_{df.loc[0, "Region"]}.csv", index = False)
 
     if make_graph:
-        compare_new = new_df["Expected Loss Value"].to_numpy()
-        compare_old = df["Expected Loss Value"].to_numpy()
+        compare_new = new_df["Expected Loss Value"].div(10).to_numpy()
+        compare_old = df["Expected Loss Value"].div(10).to_numpy()
         plot.hist([compare_old, compare_new], bins=50,label=["Original", "After Frequency Change"])
         plot.xlabel("Expected Loss Value, millions(£Q)")
         plot.ylabel("Number of Dams")
         plot.title(f"Reduction to losses by increased inspection frequency in {df.loc[0, "Region"]}")
         plot.legend()
-        plot.savefig(f"frequency_adjusted_expected_loss__{df.loc[0, "Region"]}_histogram.png")
+        plot.savefig(f"frequency_adjusted_expected_loss_{frequency}_{df.loc[0, "Region"]}_histogram.png")
+        plot.clf()
 
-    new_data = gov_expenditure.total_loss_percentile(f"machine_learning_frequency_adjusted_{df.loc[0, "Region"]}.csv", 0, 100, False)
-    old_data = gov_expenditure.total_loss_percentile(file, 0, 100, False)
+    new_data = gov_expenditure.yearly_loss_percentile(f"machine_learning_frequency_adjusted_{df.loc[0, "Region"]}.csv", 0, 100, verbose)
+    old_data = gov_expenditure.yearly_loss_percentile(file, 0, 100, verbose)
     gov_threshold = scipy.stats.norm.ppf(initial_percentile/100) * old_data[2] + old_data[1] #one standard deviation, covers 95% to 99.7% of all cases
     gov_reserve = scipy.stats.norm.ppf(0.997) * old_data[2] + old_data[1] - gov_threshold
     new__gov_detachment_point = scipy.stats.norm.ppf(0.997) * new_data[2] + new_data[1] #the amount of money for 99.7% of all cases
